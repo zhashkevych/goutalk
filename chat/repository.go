@@ -1,15 +1,18 @@
 package chat
 
-import "github.com/satori/go.uuid"
+import (
+	"context"
+)
 
 type UserRepository interface {
-	Create(username, password string) (string, error)
-	Delete(id uuid.UUID)
+	// TODO: extend with GET methods
+	Insert(ctx context.Context, u *User) error
+	Delete(ctx context.Context, u *User) error
 }
 
 type RoomRepository interface {
-	Create()
-	Delete()
-	AddUser()
-	RemoveUser()
+	Insert(ctx context.Context, r *Room) error
+	Delete(ctx context.Context, r *Room) error
+	AddUser(ctx context.Context, r *Room, u *User) error
+	RemoveUser(ctx context.Context, r *Room, u *User) error
 }

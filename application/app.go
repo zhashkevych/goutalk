@@ -2,18 +2,30 @@ package application
 
 import (
 	"context"
+	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/zhashkevych/goutalk/chat"
+	"github.com/zhashkevych/goutalk/chat/usecase"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+
+	log "github.com/sirupsen/logrus"
 	"github.com/zhashkevych/goutalk/application/handler"
-	"log"
+	"github.com/zhashkevych/goutalk/chat"
+	repo "github.com/zhashkevych/goutalk/chat/repository/mongo"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
 )
 
+const (
+	DBName = "goutalk"
+)
+
 type App struct {
 	httpServer *http.Server
+
+	mongoDB *mongo.Database
 
 	chatUsecase chat.UseCase
 	userRepo    chat.UserRepository
@@ -21,7 +33,27 @@ type App struct {
 }
 
 func NewApp() *App {
-	return &App{}
+	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017"))
+	if err != nil {
+		log.Fatalf("Error occured while establishing connection to mongoDB")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	err = client.Connect(ctx)
+
+	mongoDB := client.Database(DBName)
+
+	userRepo := repo.NewUserRepository(mongoDB)
+	roomRepo := repo.NewRoomsRepository(mongoDB)
+
+	return &App{
+		mongoDB:     mongoDB,
+		userRepo:    userRepo,
+		roomRepo:    roomRepo,
+		chatUsecase: usecase.NewChatEngine(userRepo, roomRepo),
+	}
 }
 
 func (a *App) Run(addr string) error {
@@ -33,13 +65,12 @@ func (a *App) Run(addr string) error {
 	}
 
 	a.httpServer = &http.Server{
-		Addr:    addr,
+		Addr:    fmt.Sprintf(":%s", addr),
 		Handler: h,
 	}
 
 	log.Printf("Starting HTTP application on port %s", addr)
 	go func() {
-		// service connections
 		if err := a.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Failed to listen: %s", err)
 		}
@@ -60,7 +91,7 @@ func (a *App) Stop() {
 	ctx := context.Background()
 
 	if a.httpServer != nil {
-		log.Print("Stopping http application")
+		log.Print("Stopping HTTP application")
 
 		shutdownCtx, shutdownCancel := context.WithTimeout(ctx, 10*time.Second)
 		defer shutdownCancel()
