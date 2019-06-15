@@ -18,11 +18,19 @@ func NewChatEngine(userRepo chat.UserRepository, roomRepo chat.RoomRepository) *
 	}
 }
 
-func (c *ChatEngine) RegisterNewUser(ctx context.Context, name, nickname, password string) error {
-	// TODO: check if there is such user
+func (c *ChatEngine) LoginUser(ctx context.Context, username, password string) (*chat.User, error) {
+	user, err := c.userRepo.GetByUsername(ctx, username)
+	if err == nil {
+		return user, nil
+	}
 
-	u := chat.NewUser(name, nickname, password)
+	user = chat.NewUser(username, password)
 
+	if err := c.userRepo.Insert(ctx, user); err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
 func (c *ChatEngine) GetAllUsers(ctx context.Context) ([]*chat.User, error) {

@@ -7,25 +7,23 @@ import (
 
 type User struct {
 	ID       uuid.UUID `json:"id" bson:"id"`
-	Name     string    `json:"name" bson:"name"`
-	Nickname string    `json:"nickname" bson:"nickname"`
+	Username string    `json:"username" bson:"username"`
 	Password string    `json:"password" bson:"password"`
 }
 
-func NewUser(name, nickname, pass string) *User {
+func NewUser(username, pass string) *User {
 	return &User{
 		ID:       uuid.NewV4(),
-		Name:     name,
-		Nickname: nickname,
+		Username: username,
 		Password: pass,
 	}
 }
 
 type Room struct {
-	ID        uuid.UUID `json:"id" bson:"id"`
-	CreatorID uuid.UUID `json:"creatorID" bson:"creatorID"`
-	CreatedAt time.Time `json:"createdAt" bson:"createdAt"`
-	Members   []*User   `json:"members" bson:"members"`
+	ID        uuid.UUID    `json:"id" bson:"id"`
+	CreatorID uuid.UUID    `json:"creatorID" bson:"creatorID"`
+	CreatedAt time.Time    `json:"createdAt" bson:"createdAt"`
+	Members   []uuid.UUID `json:"members" bson:"members"`
 }
 
 func NewRoom(creatorID uuid.UUID) *Room {
@@ -33,6 +31,6 @@ func NewRoom(creatorID uuid.UUID) *Room {
 		ID:        uuid.NewV4(),
 		CreatorID: creatorID,
 		CreatedAt: time.Now(),
-		Members:   make([]*User, 0),
+		Members:   make([]uuid.UUID, 0),
 	}
 }

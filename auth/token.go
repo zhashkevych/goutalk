@@ -8,24 +8,23 @@ import (
 )
 
 const salt = "qwertyuiop1234567890"
+const tokenLifetime = time.Hour * 24
 
 type Claims struct {
 	jwt.StandardClaims
 	UserID   uuid.UUID `json:"user_id"`
-	Name     string    `json:"name"`
-	Nickname string    `json:"nickname"`
+	Username string    `json:"username"`
 	Password string    `json:"password"`
 }
 
-func GenerateAuthToken(userID uuid.UUID, name, nickname, password string, lifetime time.Duration) (string, error) {
+func GenerateAuthToken(userID uuid.UUID, username, password string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		StandardClaims: jwt.StandardClaims{
 			IssuedAt:  time.Now().Unix(),
-			ExpiresAt: time.Now().Add(lifetime).Unix(),
+			ExpiresAt: time.Now().Add(tokenLifetime).Unix(),
 		},
 		UserID:   userID,
-		Name:     name,
-		Nickname: nickname,
+		Username: username,
 		Password: password,
 	})
 

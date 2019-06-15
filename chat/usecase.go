@@ -6,7 +6,7 @@ import (
 )
 
 type UseCase interface {
-	RegisterNewUser(ctx context.Context, name, nickname, password string) error
+	LoginUser(ctx context.Context, username, password string) (*User, error)
 	GetAllUsers(ctx context.Context) ([]*User, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (*User, error)
 

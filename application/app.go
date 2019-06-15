@@ -59,7 +59,7 @@ func NewApp() *App {
 func (a *App) Run(addr string) error {
 	ctx := context.Background()
 
-	h, err := getHandler()
+	h, err := a.getHandler()
 	if err != nil {
 		return err
 	}
@@ -103,11 +103,11 @@ func (a *App) Stop() {
 	}
 }
 
-func getHandler() (http.Handler, error) {
+func (a *App) getHandler() (http.Handler, error) {
 	ginHandler := gin.New()
-	ginHandler.Use(gin.Recovery())
+	ginHandler.Use(gin.Recovery(), gin.Logger())
 
-	h := handler.NewHandler()
+	h := handler.NewHandler(a.chatUsecase)
 
 	ginHandler.POST("/login", h.Login)
 
