@@ -23,13 +23,22 @@ func NewUserRepository(db *mongo.Database) *UserRepository {
 }
 
 func (r *UserRepository) Insert(ctx context.Context, u *chat.User) error {
-	_, err := r.db.InsertOne(ctx, u)
-	return err
+	res, err := r.db.InsertOne(ctx, u)
+	if err != nil {
+		return err
+	}
+
+	u.ID = res.InsertedID.(primitive.ObjectID)
+	return nil
 }
 
-func (r *UserRepository) Delete(ctx context.Context, u *chat.User) error {
-	_, err := r.db.DeleteOne(ctx, bson.M{"_id": u.ID})
-	return err
+func (r *UserRepository) Delete(ctx context.Context, id primitive.ObjectID) error {
+	_, err := r.db.DeleteOne(ctx, bson.M{"_id": id})
+	if err != nil {
+		return chat.NewErrorNotFound("user", "id", id.Hex())
+	}
+
+	return nil
 }
 
 func (r *UserRepository) GetAll(ctx context.Context) ([]*chat.User, error) {
@@ -63,7 +72,7 @@ func (r *UserRepository) GetByID(ctx context.Context, id primitive.ObjectID) (*c
 	res := r.db.FindOne(ctx, bson.M{"_id": id})
 
 	if err := res.Decode(&user); err != nil {
-		return nil, err
+		return nil, chat.NewErrorNotFound("user", "id", id.Hex())
 	}
 
 	return &user, nil
@@ -74,27 +83,8 @@ func (r *UserRepository) GetByUsername(ctx context.Context, username string) (*c
 	res := r.db.FindOne(ctx, bson.M{"username": username})
 
 	if err := res.Decode(&user); err != nil {
-		return nil, err
+		return nil, chat.NewErrorNotFound("user", "username", username)
 	}
 
 	return &user, nil
 }
-
-//func toUser(record bson.M) *chat.User {
-//	var (
-//		username string
-//		id       primitive.ObjectID
-//	)
-//
-//	if _, ex := record["_id"]; ex {
-//		id = record["_id"].(primitive.ObjectID)
-//	}
-//	if _, ex := record["username"]; ex {
-//		username = record["username"].(string)
-//	}
-//
-//	return &chat.User{
-//		ID:       id.String(),
-//		Username: username,
-//	}
-//}

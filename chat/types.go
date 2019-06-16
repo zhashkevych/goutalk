@@ -6,9 +6,9 @@ import (
 )
 
 type User struct {
-	ID       primitive.ObjectID `json:"id" bson:"_id,omitempty"`
-	Username string `json:"username" bson:"username"`
-	Password string `json:"password" bson:"password"`
+	ID       primitive.ObjectID `bson:"_id,omitempty"`
+	Username string             `bson:"username"`
+	Password string             `bson:"password"`
 }
 
 func NewUser(username, pass string) *User {
@@ -19,16 +19,18 @@ func NewUser(username, pass string) *User {
 }
 
 type Room struct {
-	ID        primitive.ObjectID    `json:"id" bson:"_id,omitempty"`
-	CreatorID primitive.ObjectID    `json:"creatorID" bson:"creatorID"`
-	CreatedAt time.Time `json:"createdAt" bson:"createdAt"`
-	Members   []primitive.ObjectID  `json:"members" bson:"members"`
+	ID        primitive.ObjectID   `bson:"_id,omitempty"`
+	CreatorID primitive.ObjectID   `bson:"creator_id"`
+	Name      string               `bson:"name"`
+	CreatedAt time.Time            `bson:"created_at"`
+	Members   []primitive.ObjectID `bson:"members"`
 }
 
-func NewRoom(creatorID primitive.ObjectID) *Room {
+func NewRoom(creatorID primitive.ObjectID, name string) *Room {
 	return &Room{
 		CreatorID: creatorID,
 		CreatedAt: time.Now(),
+		Name:      name,
 		Members:   make([]primitive.ObjectID, 0),
 	}
 }

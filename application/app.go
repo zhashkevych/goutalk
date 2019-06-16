@@ -114,12 +114,12 @@ func (a *App) getHandler() (http.Handler, error) {
 	ginHandler.GET("/users", handler.AuthMiddleware, h.GetUsers)
 	ginHandler.GET("/users/:id", handler.AuthMiddleware, h.GetUserByID)
 
-	ginHandler.POST("/rooms", handler.AuthMiddleware)
-	ginHandler.POST("/rooms/:id/join", handler.AuthMiddleware)
-	ginHandler.POST("/rooms/:id/leave", handler.AuthMiddleware)
-	ginHandler.GET("/rooms", handler.AuthMiddleware)
-	ginHandler.GET("/rooms/:id", handler.AuthMiddleware)
-	ginHandler.DELETE("/rooms/:id", handler.AuthMiddleware)
+	ginHandler.POST("/rooms", handler.AuthMiddleware, h.CreateRoom)
+	ginHandler.POST("/rooms/:id/join", handler.AuthMiddleware, h.JoinRoom)
+	ginHandler.POST("/rooms/:id/leave", handler.AuthMiddleware, h.LeaveRoom)
+	ginHandler.GET("/rooms", handler.AuthMiddleware, h.GetRooms)
+	ginHandler.GET("/rooms/:id", handler.AuthMiddleware, h.GetRoomByID)
+	ginHandler.DELETE("/rooms/:id", handler.AuthMiddleware, h.DeleteRoom)
 
 	ginHandler.POST("/message")
 

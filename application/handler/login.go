@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
 	"github.com/zhashkevych/goutalk/auth"
+	"github.com/zhashkevych/goutalk/chat"
 	"net/http"
 )
 
@@ -16,8 +17,8 @@ type loginInput struct {
 
 type loginOutput struct {
 	ID          string `json:"id"`
-	Username    string    `json:"user_name"`
-	Credentials string    `json:"credentials"`
+	Username    string `json:"user_name"`
+	Credentials string `json:"credentials"`
 }
 
 func (h *Handler) Login(c *gin.Context) {
@@ -30,7 +31,12 @@ func (h *Handler) Login(c *gin.Context) {
 
 	user, err := h.chatter.LoginUser(c.Request.Context(), inp.Username, inp.Password)
 	if err != nil {
-		log.Errorf(err.Error())
+		if err == chat.ErrWrongPassword {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, &Response{
+				"wrong password for user " + inp.Username,
+			})
+			return
+		}
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}

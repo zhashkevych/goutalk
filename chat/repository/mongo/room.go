@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	roomsCollection = "users"
+	roomsCollection = "rooms"
 )
 
 type RoomsRepository struct {
@@ -23,22 +23,31 @@ func NewRoomsRepository(db *mongo.Database) *RoomsRepository {
 }
 
 func (r *RoomsRepository) Insert(ctx context.Context, room *chat.Room) error {
-	_, err := r.db.InsertOne(ctx, r)
+	res, err := r.db.InsertOne(ctx, r)
+	if err != nil {
+		return err
+	}
+
+	room.ID = res.InsertedID.(primitive.ObjectID)
+	return nil
+}
+
+func (r *RoomsRepository) Delete(ctx context.Context, id primitive.ObjectID) error {
+	_, err := r.db.DeleteOne(ctx, bson.M{"_id": id})
+	if err != nil {
+		return chat.NewErrorNotFound("room", "id", id.Hex())
+	}
+
+	return nil
+}
+
+func (r *RoomsRepository) AddUser(ctx context.Context, roomID, userID primitive.ObjectID) error {
+	_, err := r.db.UpdateOne(ctx, bson.M{"_id": roomID}, bson.M{"$addToSet": bson.M{"members": userID.Hex()}})
 	return err
 }
 
-func (r *RoomsRepository) Delete(ctx context.Context, room *chat.Room) error {
-	_, err := r.db.DeleteOne(ctx, bson.M{"_id": room.ID})
-	return err
-}
-
-func (r *RoomsRepository) AddUser(ctx context.Context, room *chat.Room, u *chat.User) error {
-	_, err := r.db.UpdateOne(ctx, bson.M{"_id": room.ID}, bson.M{"$addToSet": bson.M{"members": u.ID}})
-	return err
-}
-
-func (r *RoomsRepository) RemoveUser(ctx context.Context, room *chat.Room, u *chat.User) error {
-	_, err := r.db.UpdateOne(ctx, bson.M{"_id": room.ID}, bson.M{"$pull": bson.M{"members": u.ID}})
+func (r *RoomsRepository) RemoveUser(ctx context.Context, roomID, userID primitive.ObjectID) error {
+	_, err := r.db.UpdateOne(ctx, bson.M{"_id": roomID}, bson.M{"$pull": bson.M{"members": userID.Hex()}})
 	return err
 }
 
@@ -73,42 +82,8 @@ func (r *RoomsRepository) GetByID(ctx context.Context, id primitive.ObjectID) (*
 	res := r.db.FindOne(ctx, bson.M{"id": id})
 
 	if err := res.Decode(&room); err != nil {
-		return nil, err
+		return nil, chat.NewErrorNotFound("room", "id", id.Hex())
 	}
 
 	return &room, nil
 }
-
-//func toRoom(record bson.M) *chat.Room {
-//	var (
-//		id        primitive.ObjectID
-//		creatorID primitive.ObjectID
-//		createdAt time.Time
-//		members   []primitive.ObjectID
-//	)
-//
-//	if _, ex := record["_id"]; ex {
-//		id = record["_id"].(primitive.ObjectID)
-//	}
-//	if _, ex := record["creatorID"]; ex {
-//		creatorID = record["creatorID"].(primitive.ObjectID)
-//	}
-//	if _, ex := record["createdAt"]; ex {
-//		createdAt = record["createdAt"].(time.Time)
-//	}
-//	if _, ex := record["members"]; ex {
-//		members = record["members"].([]primitive.ObjectID)
-//	}
-//
-//	membersStr := make([]string, len(members))
-//	for i := range members {
-//		membersStr[i] = members[i].String()
-//	}
-//
-//	return &chat.Room{
-//		ID:        id.String(),
-//		CreatedAt: createdAt,
-//		CreatorID: creatorID.String(),
-//		Members:   membersStr,
-//	}
-//}
