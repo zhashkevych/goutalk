@@ -8,11 +8,11 @@ import (
 )
 
 type createRoomInput struct {
-	Name string `json:"name"`
+	Name string `json:"name" binding:"required"`
 }
 
 type manageUserInput struct {
-	ID string `json:"user_id"`
+	ID string `json:"user_id" binding:"required"`
 }
 
 type room struct {
@@ -33,7 +33,7 @@ func (h *Handler) CreateRoom(c *gin.Context) {
 
 	user := c.MustGet(ctxKeyUser).(*chat.User)
 
-	room, err := h.chatter.CreateRoom(c.Request.Context(), inp.Name, user.ID.Hex())
+	r, err := h.chatter.CreateRoom(c.Request.Context(), inp.Name, user.ID.Hex())
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, &Response{
 			"failed to create room",
@@ -41,7 +41,7 @@ func (h *Handler) CreateRoom(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, toRoom(room))
+	c.JSON(http.StatusOK, toRoom(r))
 }
 
 func (h *Handler) JoinRoom(c *gin.Context) {
@@ -168,7 +168,7 @@ func toRoom(r *chat.Room) *room {
 	return &room{
 		ID:        r.ID.Hex(),
 		Name:      r.Name,
-		CreatorID: r.CreatorID.Hex(),
+		CreatorID: r.CreatorID,
 		CreatedAt: r.CreatedAt,
 	}
 }

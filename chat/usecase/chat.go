@@ -61,13 +61,7 @@ func (c *ChatEngine) GetUserByID(ctx context.Context, id string) (*chat.User, er
 }
 
 func (c *ChatEngine) CreateRoom(ctx context.Context, name string, creatorID string) (*chat.Room, error) {
-	cid, err := primitive.ObjectIDFromHex(creatorID)
-	if err != nil {
-		return nil, err
-	}
-
-	room := chat.NewRoom(cid, name)
-
+	room := chat.NewRoom(creatorID, name)
 	return room, c.roomRepo.Insert(ctx, room)
 }
 
@@ -127,7 +121,7 @@ func (c *ChatEngine) DeleteRoom(ctx context.Context, roomID string, user *chat.U
 		return err
 	}
 
-	if room.CreatorID != user.ID {
+	if room.CreatorID != user.ID.Hex() {
 		return chat.ErrMissingAccessRights
 	}
 
@@ -153,7 +147,7 @@ func (c *ChatEngine) GetRoomMembers(ctx context.Context, roomID string) ([]*chat
 	out := make([]*chat.User, len(room.Members))
 	for i := range room.Members {
 		for _, user := range users {
-			if user.ID == room.Members[i] {
+			if user.ID.Hex() == room.Members[i] {
 				out[i] = user
 			}
 		}

@@ -19,18 +19,18 @@ func NewUser(username, pass string) *User {
 }
 
 type Room struct {
-	ID        primitive.ObjectID   `bson:"_id,omitempty"`
-	CreatorID primitive.ObjectID   `bson:"creator_id"`
-	Name      string               `bson:"name"`
-	CreatedAt time.Time            `bson:"created_at"`
-	Members   []primitive.ObjectID `bson:"members"`
+	ID        primitive.ObjectID `bson:"_id,omitempty"`
+	CreatorID string             `bson:"creator_id"`
+	Name      string             `bson:"username"`
+	CreatedAt time.Time          `bson:"created_at"`
+	Members   []string           `bson:"members"`
 }
 
-func NewRoom(creatorID primitive.ObjectID, name string) *Room {
+func NewRoom(creatorID string, name string) *Room {
 	return &Room{
 		CreatorID: creatorID,
 		CreatedAt: time.Now(),
 		Name:      name,
-		Members:   make([]primitive.ObjectID, 0),
+		Members:   make([]string, 0),
 	}
 }

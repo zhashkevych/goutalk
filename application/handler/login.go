@@ -11,8 +11,8 @@ import (
 // TODO: responses with message
 
 type loginInput struct {
-	Username string `json:"user_name"`
-	Password string `json:"password"`
+	Username string `json:"user_name" binding:"required"`
+	Password string `json:"password" binding:"required"`
 }
 
 type loginOutput struct {

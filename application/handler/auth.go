@@ -3,8 +3,6 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/zhashkevych/goutalk/auth"
-	"github.com/zhashkevych/goutalk/chat"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
 	"strings"
 )
@@ -14,7 +12,8 @@ const (
 	ctxKeyUser            = "goutalkuser"
 )
 
-func AuthMiddleware(c *gin.Context) {
+
+func (h *Handler) Authorize(c *gin.Context) {
 	authHeader := c.GetHeader(httpHeaderAccessToken)
 	if authHeader == "" {
 		c.AbortWithStatusJSON(http.StatusUnauthorized, &Response{
@@ -46,25 +45,13 @@ func AuthMiddleware(c *gin.Context) {
 		return
 	}
 
-	user, err := toAuthUser(claims)
+	user, err := h.chatter.GetUserByID(c.Request.Context(), claims.UserID)
 	if err != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, &Response{
-			"failed to parse user data",
+		c.AbortWithStatusJSON(http.StatusForbidden, &Response{
+			"no user found",
 		})
 		return
 	}
 
 	c.Set(ctxKeyUser, user)
-}
-
-func toAuthUser(c *auth.Claims) (*chat.User, error) {
-	id, err := primitive.ObjectIDFromHex(c.UserID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &chat.User{
-		ID:       id,
-		Username: c.Username,
-	}, nil
 }

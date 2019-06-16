@@ -18,8 +18,9 @@ type user struct {
 func (h *Handler) GetUsers(c *gin.Context) {
 	users, err := h.chatter.GetAllUsers(c.Request.Context())
 	if err != nil {
-		// TODO: with response
-		c.AbortWithStatus(http.StatusInternalServerError)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, &Response{
+			"failed to get users",
+		})
 		return
 	}
 
@@ -32,9 +33,15 @@ func (h *Handler) GetUserByID(c *gin.Context) {
 	id := c.Param("id")
 	user, err := h.chatter.GetUserByID(c.Request.Context(), id)
 	if err != nil {
-		// TODO: 400 bad request
+		if _, ok := err.(*chat.ErrorNotFound); ok {
+			c.AbortWithStatusJSON(http.StatusBadRequest, &Response{
+				"id is invalid",
+			})
+			return
+		}
+
 		c.AbortWithStatusJSON(http.StatusInternalServerError, &Response{
-			"no user found",
+			"failed to get user",
 		})
 		return
 	}

@@ -111,15 +111,23 @@ func (a *App) getHandler() (http.Handler, error) {
 
 	ginHandler.POST("/login", h.Login)
 
-	ginHandler.GET("/users", handler.AuthMiddleware, h.GetUsers)
-	ginHandler.GET("/users/:id", handler.AuthMiddleware, h.GetUserByID)
+	users := ginHandler.Group("/users", h.Authorize)
+	{
+		users.GET("/", h.GetUsers)
+		users.GET("/:id", h.GetUserByID)
+	}
 
-	ginHandler.POST("/rooms", handler.AuthMiddleware, h.CreateRoom)
-	ginHandler.POST("/rooms/:id/join", handler.AuthMiddleware, h.JoinRoom)
-	ginHandler.POST("/rooms/:id/leave", handler.AuthMiddleware, h.LeaveRoom)
-	ginHandler.GET("/rooms", handler.AuthMiddleware, h.GetRooms)
-	ginHandler.GET("/rooms/:id", handler.AuthMiddleware, h.GetRoomByID)
-	ginHandler.DELETE("/rooms/:id", handler.AuthMiddleware, h.DeleteRoom)
+	rooms := ginHandler.Group("/rooms", h.Authorize)
+	{
+		rooms.POST("/", h.CreateRoom)
+		rooms.POST("/:id/join", h.JoinRoom)
+		rooms.POST("/:id/leave", h.LeaveRoom)
+
+		rooms.GET("/", h.GetRooms)
+		rooms.GET("/:id", h.GetRoomByID)
+
+		rooms.DELETE("/:id", h.DeleteRoom)
+	}
 
 	ginHandler.POST("/message")
 
