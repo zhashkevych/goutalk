@@ -3,7 +3,6 @@ package auth
 import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/pkg/errors"
-	"github.com/satori/go.uuid"
 	"time"
 )
 
@@ -12,12 +11,12 @@ const tokenLifetime = time.Hour * 24
 
 type Claims struct {
 	jwt.StandardClaims
-	UserID   uuid.UUID `json:"user_id"`
-	Username string    `json:"username"`
-	Password string    `json:"password"`
+	UserID   string `json:"user_id"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
-func GenerateAuthToken(userID uuid.UUID, username, password string) (string, error) {
+func GenerateAuthToken(userID string, username, password string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		StandardClaims: jwt.StandardClaims{
 			IssuedAt:  time.Now().Unix(),

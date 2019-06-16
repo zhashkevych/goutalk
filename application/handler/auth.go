@@ -15,23 +15,32 @@ const (
 func AuthMiddleware(c *gin.Context) {
 	authHeader := c.GetHeader(httpHeaderAccessToken)
 	if authHeader == "" {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, &Response{
+			"no auth header provided",
+		})
 		return
 	}
 
 	headerParts := strings.Split(authHeader, " ")
 	if len(headerParts) != 2 {
-		c.AbortWithStatus(http.StatusUnauthorized)
+		c.AbortWithStatusJSON(http.StatusUnauthorized, &Response{
+			"invalid auth header structure",
+		})
 		return
 	}
 
 	if headerParts[0] != "Bearer" {
-		c.AbortWithStatus(http.StatusUnauthorized)
+		c.AbortWithStatusJSON(http.StatusUnauthorized, &Response{
+			"wrong auth header type",
+		})
 		return
 	}
 
 	user, err := auth.VerifyAuthToken(headerParts[1])
 	if err != nil {
-		c.AbortWithStatus(http.StatusUnauthorized)
+		c.AbortWithStatusJSON(http.StatusUnauthorized, &Response{
+			"access token is invalid",
+		})
 		return
 	}
 

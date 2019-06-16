@@ -2,18 +2,17 @@ package chat
 
 import (
 	"context"
-	"github.com/satori/go.uuid"
 )
 
 type UseCase interface {
 	LoginUser(ctx context.Context, username, password string) (*User, error)
 	GetAllUsers(ctx context.Context) ([]*User, error)
-	GetUserByID(ctx context.Context, id uuid.UUID) (*User, error)
+	GetUserByID(ctx context.Context, id string) (*User, error)
 
-	CreateRoom(ctx context.Context, name string, creatorID uuid.UUID) error
+	CreateRoom(ctx context.Context, name string, creatorID string) error
 	GetAllRooms(ctx context.Context) ([]*Room, error)
-	GetRoomByID(ctx context.Context, id uuid.UUID) (*Room, error)
-	AddRoomMember(ctx context.Context, roomID, memberID uuid.UUID) error
-	RemoveRoomMeber(ctx context.Context, roomID, memberID uuid.UUID) error
-	DeleteRoom(ctx context.Context, roomID, user *User) error
+	GetRoomByID(ctx context.Context, id string) (*Room, error)
+	AddRoomMember(ctx context.Context, roomID, memberID string) error
+	RemoveRoomMeber(ctx context.Context, roomID, memberID string) error
+	DeleteRoom(ctx context.Context, roomID string, user *User) error
 }

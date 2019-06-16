@@ -1,36 +1,34 @@
 package chat
 
 import (
-	"github.com/satori/go.uuid"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"time"
 )
 
 type User struct {
-	ID       uuid.UUID `json:"id" bson:"id"`
-	Username string    `json:"username" bson:"username"`
-	Password string    `json:"password" bson:"password"`
+	ID       primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	Username string `json:"username" bson:"username"`
+	Password string `json:"password" bson:"password"`
 }
 
 func NewUser(username, pass string) *User {
 	return &User{
-		ID:       uuid.NewV4(),
 		Username: username,
 		Password: pass,
 	}
 }
 
 type Room struct {
-	ID        uuid.UUID    `json:"id" bson:"id"`
-	CreatorID uuid.UUID    `json:"creatorID" bson:"creatorID"`
-	CreatedAt time.Time    `json:"createdAt" bson:"createdAt"`
-	Members   []uuid.UUID `json:"members" bson:"members"`
+	ID        primitive.ObjectID    `json:"id" bson:"_id,omitempty"`
+	CreatorID primitive.ObjectID    `json:"creatorID" bson:"creatorID"`
+	CreatedAt time.Time `json:"createdAt" bson:"createdAt"`
+	Members   []primitive.ObjectID  `json:"members" bson:"members"`
 }
 
-func NewRoom(creatorID uuid.UUID) *Room {
+func NewRoom(creatorID primitive.ObjectID) *Room {
 	return &Room{
-		ID:        uuid.NewV4(),
 		CreatorID: creatorID,
 		CreatedAt: time.Now(),
-		Members:   make([]uuid.UUID, 0),
+		Members:   make([]primitive.ObjectID, 0),
 	}
 }

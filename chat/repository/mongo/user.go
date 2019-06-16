@@ -2,9 +2,9 @@ package mongo
 
 import (
 	"context"
-	"github.com/satori/go.uuid"
 	"github.com/zhashkevych/goutalk/chat"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -28,7 +28,7 @@ func (r *UserRepository) Insert(ctx context.Context, u *chat.User) error {
 }
 
 func (r *UserRepository) Delete(ctx context.Context, u *chat.User) error {
-	_, err := r.db.DeleteOne(ctx, bson.M{"id": u.ID})
+	_, err := r.db.DeleteOne(ctx, bson.M{"_id": u.ID})
 	return err
 }
 
@@ -43,13 +43,13 @@ func (r *UserRepository) GetAll(ctx context.Context) ([]*chat.User, error) {
 	out := make([]*chat.User, 0)
 
 	for cur.Next(ctx) {
-		var result bson.M
-		err := cur.Decode(&result)
+		var user chat.User
+		err := cur.Decode(&user)
 		if err != nil {
 			return nil, err
 		}
 
-		out = append(out, toUser(result))
+		out = append(out, &user)
 	}
 	if err := cur.Err(); err != nil {
 		return nil, err
@@ -58,43 +58,43 @@ func (r *UserRepository) GetAll(ctx context.Context) ([]*chat.User, error) {
 	return out, nil
 }
 
-func (r *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (*chat.User, error) {
-	var record bson.M
-	res := r.db.FindOne(ctx, bson.M{"id": id})
+func (r *UserRepository) GetByID(ctx context.Context, id primitive.ObjectID) (*chat.User, error) {
+	var user chat.User
+	res := r.db.FindOne(ctx, bson.M{"_id": id})
 
-	if err := res.Decode(record); err != nil {
+	if err := res.Decode(&user); err != nil {
 		return nil, err
 	}
 
-	return toUser(record), nil
+	return &user, nil
 }
 
 func (r *UserRepository) GetByUsername(ctx context.Context, username string) (*chat.User, error) {
-	var record bson.M
+	var user chat.User
 	res := r.db.FindOne(ctx, bson.M{"username": username})
 
-	if err := res.Decode(record); err != nil {
+	if err := res.Decode(&user); err != nil {
 		return nil, err
 	}
 
-	return toUser(record), nil
+	return &user, nil
 }
 
-func toUser(record bson.M) *chat.User {
-	var (
-		username string
-		id       uuid.UUID
-	)
-
-	if _, ex := record["id"]; ex {
-		id = record["id"].(uuid.UUID)
-	}
-	if _, ex := record["username"]; ex {
-		username = record["username"].(string)
-	}
-
-	return &chat.User{
-		ID:       id,
-		Username: username,
-	}
-}
+//func toUser(record bson.M) *chat.User {
+//	var (
+//		username string
+//		id       primitive.ObjectID
+//	)
+//
+//	if _, ex := record["_id"]; ex {
+//		id = record["_id"].(primitive.ObjectID)
+//	}
+//	if _, ex := record["username"]; ex {
+//		username = record["username"].(string)
+//	}
+//
+//	return &chat.User{
+//		ID:       id.String(),
+//		Username: username,
+//	}
+//}

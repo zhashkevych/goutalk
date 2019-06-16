@@ -2,9 +2,12 @@ package usecase
 
 import (
 	"context"
-	"github.com/satori/go.uuid"
+	"crypto/sha1"
 	"github.com/zhashkevych/goutalk/chat"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
+
+const salt = "gc7QRqMhWYHG7UgqpUbu"
 
 type ChatEngine struct {
 	userRepo chat.UserRepository
@@ -24,7 +27,11 @@ func (c *ChatEngine) LoginUser(ctx context.Context, username, password string) (
 		return user, nil
 	}
 
-	user = chat.NewUser(username, password)
+	h := sha1.New()
+	h.Write([]byte(password + salt))
+	hashedPasswordBytes := h.Sum(nil)
+
+	user = chat.NewUser(username, string(hashedPasswordBytes))
 
 	if err := c.userRepo.Insert(ctx, user); err != nil {
 		return nil, err
@@ -34,14 +41,19 @@ func (c *ChatEngine) LoginUser(ctx context.Context, username, password string) (
 }
 
 func (c *ChatEngine) GetAllUsers(ctx context.Context) ([]*chat.User, error) {
-	return nil, nil
+	return c.userRepo.GetAll(ctx)
 }
 
-func (c *ChatEngine) GetUserByID(ctx context.Context, id uuid.UUID) (*chat.User, error) {
-	return &chat.User{}, nil
+func (c *ChatEngine) GetUserByID(ctx context.Context, id string) (*chat.User, error) {
+	mid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.userRepo.GetByID(ctx, mid)
 }
 
-func (c *ChatEngine) CreateRoom(ctx context.Context, name string, creatorID uuid.UUID) error {
+func (c *ChatEngine) CreateRoom(ctx context.Context, name string, creatorID string) error {
 	return nil
 }
 
@@ -49,18 +61,18 @@ func (c *ChatEngine) GetAllRooms(ctx context.Context) ([]*chat.Room, error) {
 	return nil, nil
 }
 
-func (c *ChatEngine) GetRoomByID(ctx context.Context, id uuid.UUID) (*chat.Room, error) {
+func (c *ChatEngine) GetRoomByID(ctx context.Context, id string) (*chat.Room, error) {
 	return &chat.Room{}, nil
 }
 
-func (c *ChatEngine) AddRoomMember(ctx context.Context, roomID, memberID uuid.UUID) error {
+func (c *ChatEngine) AddRoomMember(ctx context.Context, roomID, memberID string) error {
 	return nil
 }
 
-func (c *ChatEngine) RemoveRoomMeber(ctx context.Context, roomID, memberID uuid.UUID) error {
+func (c *ChatEngine) RemoveRoomMeber(ctx context.Context, roomID, memberID string) error {
 	return nil
 }
 
-func (c *ChatEngine) DeleteRoom(ctx context.Context, roomID, user *chat.User) error {
+func (c *ChatEngine) DeleteRoom(ctx context.Context, roomID string, user *chat.User) error {
 	return nil
 }
