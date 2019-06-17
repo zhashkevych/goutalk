@@ -26,6 +26,7 @@ func main() {
 	if err := app.Run(addr); err != nil {
 		log.Fatal(err)
 	}
+
 	log.Warnf("Gracefully stopping GouTalk")
 	app.Stop()
 }

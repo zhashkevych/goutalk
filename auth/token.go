@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-const salt = "qwertyuiop1234567890"
+const salt = "i1MjGcbuMX7DFEDL"
 const tokenLifetime = time.Hour * 24
 
 type Claims struct {

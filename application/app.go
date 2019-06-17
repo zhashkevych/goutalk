@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/zhashkevych/goutalk/application/websocket"
 	"github.com/zhashkevych/goutalk/chat/usecase"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -24,6 +25,7 @@ const (
 
 type App struct {
 	httpServer *http.Server
+	wsServer   *websocket.Server
 
 	mongoDB *mongo.Database
 
@@ -48,22 +50,21 @@ func NewApp() *App {
 	userRepo := repo.NewUserRepository(mongoDB)
 	roomRepo := repo.NewRoomsRepository(mongoDB)
 
+	broadcast := make(chan []byte)
+
 	return &App{
 		mongoDB:     mongoDB,
 		userRepo:    userRepo,
 		roomRepo:    roomRepo,
-		chatUsecase: usecase.NewChatEngine(userRepo, roomRepo),
+		chatUsecase: usecase.NewChatEngine(userRepo, roomRepo, broadcast),
+		wsServer:    websocket.NewServer(broadcast),
 	}
 }
 
 func (a *App) Run(addr string) error {
 	ctx := context.Background()
 
-	h, err := a.getHandler()
-	if err != nil {
-		return err
-	}
-
+	h := a.getHandler()
 	a.httpServer = &http.Server{
 		Addr:    fmt.Sprintf(":%s", addr),
 		Handler: h,
@@ -75,6 +76,8 @@ func (a *App) Run(addr string) error {
 			log.Fatalf("Failed to listen: %s", err)
 		}
 	}()
+
+	a.wsServer.Run(":1030")
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, os.Interrupt)
@@ -101,9 +104,11 @@ func (a *App) Stop() {
 			log.Printf(err.Error())
 		}
 	}
+
+	a.wsServer.Stop()
 }
 
-func (a *App) getHandler() (http.Handler, error) {
+func (a *App) getHandler() http.Handler {
 	ginHandler := gin.New()
 	ginHandler.Use(gin.Recovery(), gin.Logger())
 
@@ -129,7 +134,7 @@ func (a *App) getHandler() (http.Handler, error) {
 		rooms.DELETE("/:id", h.DeleteRoom)
 	}
 
-	ginHandler.POST("/message")
+	ginHandler.POST("/message", h.Authorize, h.SendMessage)
 
-	return ginHandler, nil
+	return ginHandler
 }

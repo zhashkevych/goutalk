@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"crypto/sha1"
+	"encoding/json"
 	"github.com/zhashkevych/goutalk/chat"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -10,14 +11,16 @@ import (
 const salt = "gc7QRqMhWYHG7UgqpUbu"
 
 type ChatEngine struct {
-	userRepo chat.UserRepository
-	roomRepo chat.RoomRepository
+	userRepo  chat.UserRepository
+	roomRepo  chat.RoomRepository
+	broadcast chan []byte
 }
 
-func NewChatEngine(userRepo chat.UserRepository, roomRepo chat.RoomRepository) *ChatEngine {
+func NewChatEngine(userRepo chat.UserRepository, roomRepo chat.RoomRepository, broadcast chan []byte) *ChatEngine {
 	return &ChatEngine{
-		userRepo: userRepo,
-		roomRepo: roomRepo,
+		userRepo:  userRepo,
+		roomRepo:  roomRepo,
+		broadcast: broadcast,
 	}
 }
 
@@ -154,4 +157,13 @@ func (c *ChatEngine) GetRoomMembers(ctx context.Context, roomID string) ([]*chat
 	}
 
 	return out, nil
+}
+
+func (c *ChatEngine) SendMessage(m *chat.Message) error {
+	message, err := json.Marshal(m)
+	if err != nil {
+		return err
+	}
+	c.broadcast <- message
+	return nil
 }

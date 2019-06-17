@@ -34,3 +34,9 @@ func NewRoom(creatorID string, name string) *Room {
 		Members:   make([]string, 0),
 	}
 }
+
+type Message struct {
+	UserID  string `json:"user_id"`
+	RoomID  string `json:"room_id"`
+	Message string `json:"message"`
+}

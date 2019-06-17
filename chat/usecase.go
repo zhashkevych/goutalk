@@ -16,4 +16,6 @@ type UseCase interface {
 	RemoveRoomMeber(ctx context.Context, roomID, memberID string) error
 	DeleteRoom(ctx context.Context, roomID string, user *User) error
 	GetRoomMembers(ctx context.Context, roomID string) ([]*User, error)
+
+	SendMessage(message *Message) error
 }

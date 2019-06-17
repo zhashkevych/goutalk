@@ -12,10 +12,6 @@ type createRoomInput struct {
 	Name string `json:"name" binding:"required"`
 }
 
-type manageUserInput struct {
-	ID string `json:"user_id" binding:"required"`
-}
-
 type room struct {
 	ID        string    `json:"room_id"`
 	Name      string    `json:"room_name"`
@@ -48,20 +44,13 @@ func (h *Handler) CreateRoom(c *gin.Context) {
 }
 
 func (h *Handler) JoinRoom(c *gin.Context) {
-	var inp manageUserInput
-	if err := c.BindJSON(&inp); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &Response{
-			"wrong json body",
-		})
-		return
-	}
+	roomID := c.Param("id")
+	user := c.MustGet(ctxKeyUser).(*chat.User)
 
-	id := c.Param("id")
-
-	if err := h.chatter.AddRoomMember(c.Request.Context(), id, inp.ID); err != nil {
+	if err := h.chatter.AddRoomMember(c.Request.Context(), roomID, user.ID.Hex()); err != nil {
 		if _, ok := err.(*chat.ErrorNotFound); ok {
 			c.AbortWithStatusJSON(http.StatusNotFound, &Response{
-				"no room with ID " + id + " found",
+				"no room with ID " + roomID + " found",
 			})
 			return
 		}
@@ -77,20 +66,13 @@ func (h *Handler) JoinRoom(c *gin.Context) {
 }
 
 func (h *Handler) LeaveRoom(c *gin.Context) {
-	var inp manageUserInput
-	if err := c.BindJSON(&inp); err != nil {
-		c.AbortWithStatusJSON(http.StatusBadRequest, &Response{
-			"wrong json body",
-		})
-		return
-	}
+	roomID := c.Param("id")
+	user := c.MustGet(ctxKeyUser).(*chat.User)
 
-	id := c.Param("id")
-
-	if err := h.chatter.RemoveRoomMeber(c.Request.Context(), id, inp.ID); err != nil {
+	if err := h.chatter.RemoveRoomMeber(c.Request.Context(), roomID, user.ID.Hex()); err != nil {
 		if _, ok := err.(*chat.ErrorNotFound); ok {
 			c.AbortWithStatusJSON(http.StatusNotFound, &Response{
-				"no room with ID " + id + " found",
+				"no room with ID " + roomID + " found",
 			})
 			return
 		}

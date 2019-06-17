@@ -6,6 +6,7 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gin-gonic/gin v1.4.0
 	github.com/golang/snappy v0.0.1 // indirect
+	github.com/gorilla/websocket v1.4.0
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/common v0.4.0
