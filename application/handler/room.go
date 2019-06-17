@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/zhashkevych/goutalk/chat"
 	"net/http"
@@ -20,6 +21,7 @@ type room struct {
 	Name      string    `json:"room_name"`
 	CreatorID string    `json:"creator_id"`
 	CreatedAt time.Time `json:"created_at"`
+	Members   []*user   `json:"members"`
 }
 
 func (h *Handler) CreateRoom(c *gin.Context) {
@@ -31,9 +33,10 @@ func (h *Handler) CreateRoom(c *gin.Context) {
 		return
 	}
 
+	ctx := c.Request.Context()
 	user := c.MustGet(ctxKeyUser).(*chat.User)
 
-	r, err := h.chatter.CreateRoom(c.Request.Context(), inp.Name, user.ID.Hex())
+	r, err := h.chatter.CreateRoom(ctx, inp.Name, user.ID.Hex())
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, &Response{
 			"failed to create room",
@@ -41,7 +44,7 @@ func (h *Handler) CreateRoom(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, toRoom(r))
+	c.JSON(http.StatusOK, h.toRoom(ctx, r))
 }
 
 func (h *Handler) JoinRoom(c *gin.Context) {
@@ -103,7 +106,9 @@ func (h *Handler) LeaveRoom(c *gin.Context) {
 }
 
 func (h *Handler) GetRooms(c *gin.Context) {
-	rooms, err := h.chatter.GetAllRooms(c.Request.Context())
+	ctx := c.Request.Context()
+
+	rooms, err := h.chatter.GetAllRooms(ctx)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, &Response{
 			"failed to get rooms from db",
@@ -111,12 +116,21 @@ func (h *Handler) GetRooms(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, toRooms(rooms))
+	if rooms == nil || len(rooms) == 0 {
+		c.AbortWithStatusJSON(http.StatusNotFound, &Response{
+			"no rooms found",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, h.toRooms(ctx, rooms))
 }
 
 func (h *Handler) GetRoomByID(c *gin.Context) {
+	ctx := c.Request.Context()
 	id := c.Param("id")
-	room, err := h.chatter.GetRoomByID(c.Request.Context(), id)
+
+	room, err := h.chatter.GetRoomByID(ctx, id)
 	if err != nil {
 		if _, ok := err.(*chat.ErrorNotFound); ok {
 			c.AbortWithStatusJSON(http.StatusNotFound, &Response{
@@ -130,7 +144,7 @@ func (h *Handler) GetRoomByID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, toRoom(room))
+	c.JSON(http.StatusOK, h.toRoom(ctx, room))
 }
 
 func (h *Handler) DeleteRoom(c *gin.Context) {
@@ -144,6 +158,14 @@ func (h *Handler) DeleteRoom(c *gin.Context) {
 			})
 			return
 		}
+
+		if err == chat.ErrMissingAccessRights {
+			c.AbortWithStatusJSON(http.StatusForbidden, &Response{
+				"no room with ID " + id + " found",
+			})
+			return
+		}
+
 		c.AbortWithStatusJSON(http.StatusInternalServerError, &Response{
 			"failed to delete room",
 		})
@@ -155,20 +177,22 @@ func (h *Handler) DeleteRoom(c *gin.Context) {
 	})
 }
 
-func toRooms(rooms []*chat.Room) []*room {
+func (h *Handler) toRooms(ctx context.Context, rooms []*chat.Room) []*room {
 	out := make([]*room, len(rooms))
 	for i := range rooms {
-		out[i] = toRoom(rooms[i])
+		out[i] = h.toRoom(ctx, rooms[i])
 	}
 
 	return out
 }
 
-func toRoom(r *chat.Room) *room {
+func (h *Handler) toRoom(ctx context.Context, r *chat.Room) *room {
+	members, _ := h.chatter.GetRoomMembers(ctx, r.ID.Hex())
 	return &room{
 		ID:        r.ID.Hex(),
 		Name:      r.Name,
 		CreatorID: r.CreatorID,
 		CreatedAt: r.CreatedAt,
+		Members:   toUsers(members),
 	}
 }

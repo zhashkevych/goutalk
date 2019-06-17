@@ -118,7 +118,7 @@ func (c *ChatEngine) DeleteRoom(ctx context.Context, roomID string, user *chat.U
 
 	room, err := c.roomRepo.GetByID(ctx, rID)
 	if err != nil {
-		return err
+		return chat.NewErrorNotFound("room", "id", roomID)
 	}
 
 	if room.CreatorID != user.ID.Hex() {

@@ -23,7 +23,7 @@ func NewRoomsRepository(db *mongo.Database) *RoomsRepository {
 }
 
 func (r *RoomsRepository) Insert(ctx context.Context, room *chat.Room) error {
-	res, err := r.db.InsertOne(ctx, r)
+	res, err := r.db.InsertOne(ctx, room)
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func (r *RoomsRepository) GetAll(ctx context.Context) ([]*chat.Room, error) {
 
 func (r *RoomsRepository) GetByID(ctx context.Context, id primitive.ObjectID) (*chat.Room, error) {
 	var room chat.Room
-	res := r.db.FindOne(ctx, bson.M{"id": id})
+	res := r.db.FindOne(ctx, bson.M{"_id": id})
 
 	if err := res.Decode(&room); err != nil {
 		return nil, chat.NewErrorNotFound("room", "id", id.Hex())

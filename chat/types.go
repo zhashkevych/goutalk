@@ -21,7 +21,7 @@ func NewUser(username, pass string) *User {
 type Room struct {
 	ID        primitive.ObjectID `bson:"_id,omitempty"`
 	CreatorID string             `bson:"creator_id"`
-	Name      string             `bson:"username"`
+	Name      string             `bson:"name"`
 	CreatedAt time.Time          `bson:"created_at"`
 	Members   []string           `bson:"members"`
 }
