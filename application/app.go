@@ -201,5 +201,5 @@ func (a *App) serveWS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	client := ws.NewClient(a.hub, conn)
-	client.Run()
+	client.Serve()
 }

@@ -34,8 +34,10 @@ func NewClient(hub *Hub, conn *websocket.Conn) *Client {
 	return client
 }
 
-// TODO: Rename method :)
-func (c *Client) Run() {
+// Serve runs two goroutines
+// that sends broadcast messages to client
+// and removes client from connection pool on disconnect
+func (c *Client) Serve() {
 	go c.writePump()
 	go c.handleConnection()
 }

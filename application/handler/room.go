@@ -143,7 +143,7 @@ func (h *Handler) DeleteRoom(c *gin.Context) {
 
 		if err == chat.ErrMissingAccessRights {
 			c.AbortWithStatusJSON(http.StatusForbidden, &Response{
-				"no room with ID " + id + " found",
+				"you have no rights to delete this room",
 			})
 			return
 		}

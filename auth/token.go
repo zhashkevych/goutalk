@@ -16,7 +16,7 @@ type Claims struct {
 	Password string `json:"password"`
 }
 
-func GenerateAuthToken(userID string, username, password string) (string, error) {
+func GenerateAuthToken(userID, username, password string) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		StandardClaims: jwt.StandardClaims{
 			IssuedAt:  time.Now().Unix(),
