@@ -1,4 +1,4 @@
-package websocket
+package ws
 
 import (
 	log "github.com/sirupsen/logrus"
@@ -9,7 +9,7 @@ import (
 
 const (
 	// Time allowed to write a message to the peer.
-	writeWait = 10 * time.Second
+	writeWait  = 10 * time.Second
 	pingPeriod = time.Minute
 )
 
@@ -18,12 +18,29 @@ var (
 )
 
 type Client struct {
-	hub *Hub
+	hub  *Hub
 	conn *websocket.Conn
 	send chan []byte
 }
 
-// writePump pumps messages from the hub to the websocket connection.
+func NewClient(hub *Hub, conn *websocket.Conn) *Client {
+	client := &Client{
+		hub:  hub,
+		conn: conn,
+		send: make(chan []byte, 256),
+	}
+	client.hub.register <- client
+
+	return client
+}
+
+// TODO: Rename method :)
+func (c *Client) Run() {
+	go c.writePump()
+	go c.handleConnection()
+}
+
+// writePump pumps messages from the hub to the ws connection.
 func (c *Client) writePump() {
 	ticker := time.NewTicker(pingPeriod)
 
@@ -48,7 +65,7 @@ func (c *Client) writePump() {
 			}
 			w.Write(message)
 
-			// Add queued chat messages to the current websocket message.
+			// Add queued chat messages to the current ws message.3
 			n := len(c.send)
 			for i := 0; i < n; i++ {
 				w.Write(newline)

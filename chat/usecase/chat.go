@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha1"
 	"encoding/json"
+	"github.com/zhashkevych/goutalk/application/ws"
 	"github.com/zhashkevych/goutalk/chat"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -11,16 +12,16 @@ import (
 const salt = "gc7QRqMhWYHG7UgqpUbu"
 
 type ChatEngine struct {
-	userRepo  chat.UserRepository
-	roomRepo  chat.RoomRepository
-	broadcast chan []byte
+	userRepo chat.UserRepository
+	roomRepo chat.RoomRepository
+	hub      *ws.Hub
 }
 
-func NewChatEngine(userRepo chat.UserRepository, roomRepo chat.RoomRepository, broadcast chan []byte) *ChatEngine {
+func NewChatEngine(userRepo chat.UserRepository, roomRepo chat.RoomRepository, hub *ws.Hub) *ChatEngine {
 	return &ChatEngine{
-		userRepo:  userRepo,
-		roomRepo:  roomRepo,
-		broadcast: broadcast,
+		userRepo: userRepo,
+		roomRepo: roomRepo,
+		hub:      hub,
 	}
 }
 
@@ -164,6 +165,6 @@ func (c *ChatEngine) SendMessage(m *chat.Message) error {
 	if err != nil {
 		return err
 	}
-	c.broadcast <- message
-	return nil
+
+	return c.hub.Publish(message)
 }

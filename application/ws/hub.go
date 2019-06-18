@@ -1,22 +1,30 @@
-package websocket
+package ws
+
+import (
+	"errors"
+)
+
+const (
+	maxMessageSize = 512
+)
 
 type Hub struct {
-	clients map[*Client]bool
-	broadcast chan []byte
-	register chan *Client
+	clients    map[*Client]bool
+	broadcast  chan []byte
+	register   chan *Client
 	unregister chan *Client
 }
 
-func newHub(broadcast chan []byte) *Hub {
+func NewHub() *Hub {
 	return &Hub{
-		broadcast:  broadcast,
+		broadcast:  make(chan []byte, maxMessageSize),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		clients:    make(map[*Client]bool),
 	}
 }
 
-func (h *Hub) run() {
+func (h *Hub) Run() {
 	for {
 		select {
 		case client := <-h.register:
@@ -37,4 +45,13 @@ func (h *Hub) run() {
 			}
 		}
 	}
+}
+
+func (h *Hub) Publish(msg []byte) error {
+	if len(msg) > maxMessageSize {
+		return errors.New("message size limit exceeded")
+	}
+
+	h.broadcast <- msg
+	return nil
 }
