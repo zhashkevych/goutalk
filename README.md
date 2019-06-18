@@ -13,7 +13,7 @@ To run the project locally all you have to do is run:
 
 ## Key Concept and Endpoints description
 
-###POST /login
+### POST /login
 
 Requires no auth, creates new user if not exists, or sings in existent user by generating JWT Token 
 
@@ -36,7 +36,7 @@ Requires no auth, creates new user if not exists, or sings in existent user by g
 
 ##### *Note: All other endpoints requires Bearer token authentication
 
-###GET /users
+### GET /users
 
 Returns a list of existing users
 
@@ -56,7 +56,7 @@ Returns a list of existing users
 }
 ```
 
-###GET /users/<USER_ID>
+### GET /users/<USER_ID>
 
 Returns info for specific user
 
@@ -68,7 +68,7 @@ Returns info for specific user
 }
 ```
 
-###GET /rooms
+### GET /rooms
 
 Returns a list of rooms available
 
@@ -97,7 +97,7 @@ Returns a list of rooms available
 ]
 ```
 
-###GET /rooms/<ROOM_ID>
+### GET /rooms/<ROOM_ID>
 
 Returns info for a given room
 
@@ -117,7 +117,7 @@ Returns info for a given room
 }
 ```
 
-###POST /rooms
+### POST /rooms
 
 Adds a new chat room
 
@@ -139,7 +139,7 @@ Adds a new chat room
 }
 ```
 
-###DELETE /rooms/<ROOM_ID>
+### DELETE /rooms/<ROOM_ID>
 
 Removes specific chat room (by room creator)
 
@@ -150,7 +150,7 @@ Removes specific chat room (by room creator)
 }
 ```
 
-###POST /rooms/<ROOM_ID>/join
+### POST /rooms/<ROOM_ID>/join
 
 Adds current user to a given chatroom
 
@@ -162,7 +162,7 @@ Adds current user to a given chatroom
 ```
 
 
-###POST /rooms/<ROOM_ID>/leave
+### POST /rooms/<ROOM_ID>/leave
 
 Removes current user from a given chatroom
 
@@ -173,7 +173,7 @@ Removes current user from a given chatroom
 }
 ```
 
-###POST /message
+### POST /message
 
 Sends message to all connected via Websockets clients
 ##### *Websoket connection is established on ws://hostname:1030/
