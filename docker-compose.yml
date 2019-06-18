@@ -6,7 +6,7 @@ services:
     image: goutalk
     build:
       context: .
-    command: ./app -addr=8000
+    command: ./app -httpAddr=8000 -wsAddr=1030 -dbURI=mongodb://mongodb:27017
     ports:
       - 8000:8000
     depends_on:

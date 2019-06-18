@@ -8,22 +8,33 @@ import (
 )
 
 var (
-	addr string
+	httpAddr string
+	wsAddr   string
+	dbURI    string
 )
 
 func main() {
 	setupLogging()
 
-	flag.StringVar(&addr,
-		"addr",
+	flag.StringVar(&httpAddr,
+		"httpAddr",
 		"8000",
-		"port used to run application")
+		"port used to run application's http server")
+	flag.StringVar(&wsAddr,
+		"wsAddr",
+		"1030",
+		"port used to run application's websocket server")
+	flag.StringVar(&dbURI,
+		"dbURI",
+		"mongodb://localhost:27017",
+		"mongodb host")
+
 	flag.Parse()
 
 	log.Infof("Starting GouTalk server")
 
-	app := application.NewApp()
-	if err := app.Run(addr); err != nil {
+	app := application.NewApp(dbURI)
+	if err := app.Run(httpAddr, wsAddr); err != nil {
 		log.Fatal(err)
 	}
 

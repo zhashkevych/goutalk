@@ -38,8 +38,8 @@ type App struct {
 	roomRepo    chat.RoomRepository
 }
 
-func NewApp() *App {
-	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017"))
+func NewApp(dbURI string) *App {
+	client, err := mongo.NewClient(options.Client().ApplyURI(dbURI))
 	if err != nil {
 		log.Fatalf("Error occured while establishing connection to mongoDB")
 	}
@@ -48,6 +48,11 @@ func NewApp() *App {
 	defer cancel()
 
 	err = client.Connect(ctx)
+
+	err = client.Ping(context.Background(), nil)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	mongoDB := client.Database(DBName)
 
@@ -72,16 +77,16 @@ func NewApp() *App {
 	}
 }
 
-func (a *App) Run(addr string) error {
+func (a *App) Run(httpAddr, wsAddr string) error {
 	ctx := context.Background()
 
 	h := a.getHandler()
 	a.httpServer = &http.Server{
-		Addr:    fmt.Sprintf(":%s", addr),
+		Addr:    fmt.Sprintf(":%s", httpAddr),
 		Handler: h,
 	}
 
-	log.Printf("Starting HTTP server on port %s", addr)
+	log.Printf("Starting HTTP server on port %s", httpAddr)
 	go func() {
 		if err := a.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Failed to listen: %s", err)
@@ -90,11 +95,11 @@ func (a *App) Run(addr string) error {
 
 	wsHandler := a.getWSHandler()
 	a.wsServer = &http.Server{
-		Addr:    ":1030",
+		Addr:    fmt.Sprintf(":%s", wsAddr),
 		Handler: wsHandler,
 	}
 
-	log.Printf("Starting WebSocket server on port 1030")
+	log.Printf("Starting WebSocket server on port %s", wsAddr)
 	go func() {
 		if err := a.wsServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Failed to listen: %s", err)
