@@ -2,6 +2,8 @@ package bot
 
 import (
 	"github.com/gorilla/websocket"
+	"github.com/zhashkevych/goutalk/bot/nlu"
+	"github.com/zhashkevych/goutalk/bot/nlu/dialogflow"
 	"github.com/zhashkevych/goutalk/bot/queue"
 	"log"
 	"net/url"
@@ -16,22 +18,27 @@ type ChatBot struct {
 	wsURL     url.URL
 	serverURL url.URL
 
-	processor LanguageProcessor
+	processor nlu.Processor
 
 	taskQueue *queue.Queue
 	response  chan *queue.Result
 }
 
-func NewChatBot(host, path string) *ChatBot {
+func NewChatBot(host, path string) (*ChatBot, error) {
+	processor, err := dialogflow.NewDialogflowProcessor("goutalkbot-rtwdcq", "en-US", "creds.json")
+	if err != nil {
+		return nil, err
+	}
+
 	return &ChatBot{
 		wsURL: url.URL{
 			Scheme: urlScheme,
 			Host:   host,
 			Path:   path,
 		},
-		taskQueue: queue.NewQueue(),
+		taskQueue: queue.NewQueue(processor, 10),
 		response:  make(chan *queue.Result),
-	}
+	}, nil
 }
 
 func (c *ChatBot) Run() error {
@@ -44,6 +51,8 @@ func (c *ChatBot) Run() error {
 	}
 	defer conn.Close()
 
+	c.taskQueue.Start(c.response)
+
 	done := make(chan struct{})
 
 	go func() {
@@ -54,7 +63,19 @@ func (c *ChatBot) Run() error {
 				log.Println("read:", err)
 				return
 			}
-			log.Printf("recv: %s", message)
+
+			m, err := Parse(message)
+			if err != nil {
+				log.Println("error parsing message:", err)
+				continue
+			}
+
+			// message contains no @bot mention
+			if m == nil {
+				continue
+			}
+
+			c.taskQueue.Enqueue(m.Text, m.RoomID, m.UserID)
 		}
 	}()
 
@@ -63,8 +84,15 @@ func (c *ChatBot) Run() error {
 		case <-done:
 			return nil
 			// case recieved message from queue
-		case t := <-ticker.C:
-			err := conn.WriteMessage(websocket.TextMessage, []byte(t.String()))
+		case r := <-c.response:
+			if r.Err != nil {
+				log.Println("error: %s", r.Err.Error())
+				continue
+			}
+
+			log.Println("response: %s", r.ResponseMsg)
+
+			err := conn.WriteMessage(websocket.TextMessage, []byte(r.ResponseMsg))
 			if err != nil {
 				log.Println("write:", err)
 				return err

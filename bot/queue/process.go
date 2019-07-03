@@ -19,11 +19,12 @@ func (q *Queue) downloadAndSend(m *message, results chan *Result) {
 	q.doneWg.Add(1)
 	defer q.doneWg.Done()
 
-	result, err := q.handler(ctx, m.url)
+	response, err := q.processor.Process(ctx, m.text, m.userID, m.roomID)
 
 	results <- &Result{
-		ChatID:   m.chatID,
-		Filename: result,
-		Err:      err,
+		RoomID:      m.roomID,
+		UserID:      m.userID,
+		ResponseMsg: response,
+		Err:         err,
 	}
 }

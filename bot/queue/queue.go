@@ -1,36 +1,44 @@
 package queue
 
 import (
-	"context"
+	"github.com/zhashkevych/goutalk/bot/nlu"
 	"sync"
 )
 
-type HandleFunc func(ctx context.Context, url string) (string, error)
-
 type message struct {
-	url    string
-	chatID int64
+	text   string
+	roomID string
+	userID string
+}
+
+func newMessage(text, roomID, userID string) *message {
+	return &message{
+		text:   text,
+		roomID: roomID,
+		userID: userID,
+	}
 }
 
 type Result struct {
-	ChatID   int64
-	Filename string
-	Err      error
+	RoomID      string
+	UserID      string
+	ResponseMsg string
+	Err         error
 }
 
 type Queue struct {
-	queue   chan *message
-	doneWg  *sync.WaitGroup
-	handler HandleFunc
+	queue     chan *message
+	doneWg    *sync.WaitGroup
+	processor nlu.Processor
 
 	maxProcessTime int64
 }
 
-func NewQueue(h HandleFunc, maxProcessTime int64) *Queue {
+func NewQueue(processor nlu.Processor, maxProcessTime int64) *Queue {
 	return &Queue{
 		queue:          make(chan *message),
 		doneWg:         new(sync.WaitGroup),
-		handler:        h,
+		processor:      processor,
 		maxProcessTime: maxProcessTime,
 	}
 }
@@ -44,14 +52,7 @@ func (q *Queue) Stop() {
 	close(q.queue)
 }
 
-func (q *Queue) Enqueue(m *tgbotapi.Message) {
-	msg := q.toMessage(m)
+func (q *Queue) Enqueue(text, roomID, userID string) {
+	msg := newMessage(text, roomID, userID)
 	q.queue <- msg
-}
-
-func (q *Queue) toMessage(m *tgbotapi.Message) *message {
-	return &message{
-		chatID: m.Chat.ID,
-		url:    m.Text,
-	}
 }
