@@ -7,7 +7,7 @@ COPY . /go/src/github.com/zhashkevych/goutalk/
 WORKDIR /go/src/github.com/zhashkevych/goutalk/
 
 RUN export GO111MODULE=on && go mod download && go get -u ./...
-RUN GO111MODULE=on CGO_ENABLED=0 GOOS=linux go build -o app ./cmd/main.go
+RUN GO111MODULE=on CGO_ENABLED=0 GOOS=linux go build -o app ./cmd/bot/main.go
 
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates

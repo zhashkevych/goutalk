@@ -48,6 +48,9 @@ func NewApp(dbURI string) *App {
 	defer cancel()
 
 	err = client.Connect(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	err = client.Ping(context.Background(), nil)
 	if err != nil {
