@@ -7,7 +7,6 @@ import (
 	dialogflowpb "google.golang.org/genproto/googleapis/cloud/dialogflow/v2"
 	"context"
 	"fmt"
-	"log"
 )
 
 type Response struct {
@@ -39,8 +38,8 @@ func NewDialogflowProcessor(projectID, lang, jsonPath string) (*DialogflowProces
 	}, nil
 }
 
-func (dp *DialogflowProcessor) Process(ctx context.Context, message, userID, chatID string) (string, error) {
-	session := fmt.Sprintf("projects/%s/agent/sessions/%s", dp.projectID, chatID+userID)
+func (dp *DialogflowProcessor) Process(ctx context.Context, message, chatID string) (string, error) {
+	session := fmt.Sprintf("projects/%s/agent/sessions/%s", dp.projectID, chatID)
 
 	textInput := dialogflowpb.TextInput{Text: message, LanguageCode: dp.lang}
 	queryTextInput := dialogflowpb.QueryInput_Text{Text: &textInput}
@@ -51,8 +50,6 @@ func (dp *DialogflowProcessor) Process(ctx context.Context, message, userID, cha
 	if err != nil {
 		return "", err
 	}
-
-	log.Printf("recieved response: %+v", response)
 
 	queryResult := response.GetQueryResult()
 	fulfillmentText := queryResult.GetFulfillmentText()

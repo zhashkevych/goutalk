@@ -1,10 +1,12 @@
 package bot
 
 import (
+	"context"
 	"github.com/gorilla/websocket"
-	"github.com/zhashkevych/goutalk/bot/nlu"
-	"github.com/zhashkevych/goutalk/bot/nlu/dialogflow"
-	"github.com/zhashkevych/goutalk/bot/queue"
+	"github.com/zhashkevych/goutalk/nlu"
+	"github.com/zhashkevych/goutalk/nlu/dialogflow"
+	"github.com/zhashkevych/goutalk/queue"
+	"github.com/zhashkevych/scheduler"
 	"log"
 	"net/url"
 	"os"
@@ -12,32 +14,49 @@ import (
 	"time"
 )
 
-const urlScheme = "ws"
+const (
+	wsURLScheme = "ws"
+	lang        = "en-US"
+)
 
 type ChatBot struct {
-	wsURL     url.URL
-	serverURL url.URL
+	wsURL      url.URL
+	serverHost string
+
+	connection *websocket.Conn
+
+	username  string
+	password  string
+	authToken string
 
 	processor nlu.Processor
 
 	taskQueue *queue.Queue
 	response  chan *queue.Result
+
+	scheduler *scheduler.Scheduler
 }
 
-func NewChatBot(host, path string) (*ChatBot, error) {
-	processor, err := dialogflow.NewDialogflowProcessor("goutalkbot-rtwdcq", "en-US", "creds.json")
+func NewChatBot(wsHost, serverHost, username, password, projectID, credsPath string) (*ChatBot, error) {
+	processor, err := dialogflow.NewDialogflowProcessor(projectID, lang, credsPath)
 	if err != nil {
 		return nil, err
 	}
 
 	return &ChatBot{
 		wsURL: url.URL{
-			Scheme: urlScheme,
-			Host:   host,
-			Path:   path,
+			Scheme: wsURLScheme,
+			Host:   wsHost,
+			Path:   "/",
 		},
+		serverHost: serverHost,
+
+		username: username,
+		password: password,
+
 		taskQueue: queue.NewQueue(processor, 10),
 		response:  make(chan *queue.Result),
+		scheduler: scheduler.NewScheduler(),
 	}, nil
 }
 
@@ -49,69 +68,37 @@ func (c *ChatBot) Run() error {
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	c.connection = conn
+
+	ctx := context.Background()
+
+	// Initial login request
+	c.setAuthToken(ctx)
+	// Logging in to GouTalk's server every 24 hours (token lifetime duration)
+	c.scheduler.Add(ctx, c.setAuthToken, time.Hour*24)
 
 	c.taskQueue.Start(c.response)
 
 	done := make(chan struct{})
 
-	go func() {
-		defer close(done)
-		for {
-			_, message, err := conn.ReadMessage()
-			if err != nil {
-				log.Println("read:", err)
-				return
-			}
+	go c.listen(done)
 
-			m, err := Parse(message)
-			if err != nil {
-				log.Println("error parsing message:", err)
-				continue
-			}
+	return c.write(done, interrupt)
+}
 
-			// message contains no @bot mention
-			if m == nil {
-				continue
-			}
+func (c *ChatBot) Stop() {
+	c.taskQueue.Stop()
 
-			c.taskQueue.Enqueue(m.Text, m.RoomID, m.UserID)
-		}
-	}()
-
-	for {
-		select {
-		case <-done:
-			return nil
-			// case recieved message from queue
-		case r := <-c.response:
-			if r.Err != nil {
-				log.Println("error: %s", r.Err.Error())
-				continue
-			}
-
-			log.Println("response: %s", r.ResponseMsg)
-
-			err := conn.WriteMessage(websocket.TextMessage, []byte(r.ResponseMsg))
-			if err != nil {
-				log.Println("write:", err)
-				return err
-			}
-		case <-interrupt:
-			log.Println("interrupt")
-
-			// Cleanly close the connection by sending a close message and then
-			// waiting (with timeout) for the server to close the connection.
-			err := conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-			if err != nil {
-				log.Println("write close:", err)
-				return err
-			}
-			select {
-			case <-done:
-			case <-time.After(time.Second):
-			}
-			return nil
-		}
+	if err := c.connection.Close(); err != nil {
+		log.Printf("error occured on connection close: %s", err.Error())
 	}
+}
+
+func (c *ChatBot) setAuthToken(ctx context.Context) {
+	token, err := c.login()
+	if err != nil {
+		log.Printf("error logging in to GouTalk Chat Server: %s", err.Error())
+	}
+
+	c.authToken = token
 }

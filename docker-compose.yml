@@ -4,11 +4,13 @@ services:
 
   server:
     image: goutalk
+    container_name: "goutalk"
     build:
       context: .
     command: ./app -httpAddr=8000 -wsAddr=1030 -dbURI=mongodb://mongodb:27017
     ports:
       - 8000:8000
+      - 1030:1030
     depends_on:
       - mongodb
 
@@ -25,3 +27,12 @@ services:
     ports:
       - 27017:27017
     command: mongod --smallfiles --logpath=/dev/null # --quiet
+
+  chatbot:
+    image: goutalk-chatbot
+    container_name: "chatbot"
+    build:
+      context: .
+    command: ./bot
+    depends_on:
+      - server

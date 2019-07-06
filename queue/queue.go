@@ -1,27 +1,24 @@
 package queue
 
 import (
-	"github.com/zhashkevych/goutalk/bot/nlu"
+	"github.com/zhashkevych/goutalk/nlu"
 	"sync"
 )
 
 type message struct {
 	text   string
 	roomID string
-	userID string
 }
 
-func newMessage(text, roomID, userID string) *message {
+func newMessage(text, roomID string) *message {
 	return &message{
 		text:   text,
 		roomID: roomID,
-		userID: userID,
 	}
 }
 
 type Result struct {
 	RoomID      string
-	UserID      string
 	ResponseMsg string
 	Err         error
 }
@@ -52,7 +49,7 @@ func (q *Queue) Stop() {
 	close(q.queue)
 }
 
-func (q *Queue) Enqueue(text, roomID, userID string) {
-	msg := newMessage(text, roomID, userID)
+func (q *Queue) Push(text, roomID string) {
+	msg := newMessage(text, roomID)
 	q.queue <- msg
 }
