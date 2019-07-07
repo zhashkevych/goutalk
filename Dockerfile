@@ -11,8 +11,10 @@ RUN GO111MODULE=on CGO_ENABLED=0 GOOS=linux go build -o app ./cmd/chat/main.go
 RUN GO111MODULE=on CGO_ENABLED=0 GOOS=linux go build -o .bin/bot ./cmd/bot/main.go
 
 FROM alpine:latest
+
 RUN apk --no-cache add ca-certificates
 WORKDIR /root/
+
 COPY --from=0 /go/src/github.com/zhashkevych/goutalk/app .
 COPY --from=0 /go/src/github.com/zhashkevych/goutalk/.bin/bot .
 COPY --from=0 /go/src/github.com/zhashkevych/goutalk/creds.json .
