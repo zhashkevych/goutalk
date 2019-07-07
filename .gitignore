@@ -1,3 +1,5 @@
 .idea
 .data
 .DS_Store
+creds.json
+config.yaml

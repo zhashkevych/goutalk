@@ -1,4 +1,4 @@
-# goutalk
+# GouTalk
 Simple chat server written in Go (demo project for "Backend Challenge Hackathon") 
 
 ## Requirements
@@ -201,3 +201,14 @@ Sends message to all connected via Websockets clients
    "message": "I’m going to the stars and then past them."
 }
 ```
+
+# GouTalk Chat Bot
+Chat Bot is an app that listens on websocket connection, and replies to messages that starts with **@bot** mention 
+
+Bot uses Dialogflow as NLU Service for speach generation
+
+## Build and Run
+
+To run the project locally all you have to do is run:
+
+```docker-compose up chatbot```
