@@ -13,8 +13,7 @@ func main() {
 		log.Printf("Error occured while reading config file: %s", err.Error())
 		return
 	}
-
-
+	
 	setupLogging()
 	chatBot, err := setupChatBot(config)
 	if err != nil {
