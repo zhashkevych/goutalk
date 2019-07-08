@@ -42,6 +42,7 @@ func (c *ChatBot) write(done chan struct{}, interrupt chan os.Signal) error {
 			// case recieved message from queue
 		case r := <-c.response:
 			if r.Err != nil {
+				c.sendMessage(r.RoomID, "I'm struggling to answer you back at the moment")
 				log.Printf("error: %s", r.Err.Error())
 				continue
 			}
