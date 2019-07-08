@@ -28,6 +28,8 @@ func (c *ChatBot) listen(done chan struct{}) {
 			continue
 		}
 
+		log.Printf("Recieved message from chat room with ID %s, message: %s", msg.RoomID, msg.Text)
+
 		c.taskQueue.Push(msg.Text, msg.RoomID)
 	}
 }
@@ -48,6 +50,8 @@ func (c *ChatBot) write(done chan struct{}, interrupt chan os.Signal) error {
 				log.Printf("error on message send: %s", err.Error())
 				continue
 			}
+
+			log.Printf("Sent message to chat room with ID %s, message: %s", r.RoomID, r.ResponseMsg)
 		case <-interrupt:
 			// Cleanly close the connection by sending a close message and then
 			// waiting (with timeout) for the server to close the connection.
