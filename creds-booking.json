@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "restaurant-booking-nqnwgf",
+  "private_key_id": "6cadf657d8f7c53947fa40c4e5d2d5ffd3a1b7ae",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQC4AwozjYX3RkGC\nozhyVczZkvnE5yrzSeencO2HK6pjdfNYalf5rUvF2hUYx4kvoWrlsckz9GaJItHg\njzwlNEED9xXRjeM0grj76ntEqj8JVHQa8Tionf6H/CP+F5+xzH8YFhVCKU1yayYz\nsJphnJmcszTSJM38hwbbT7FTk3RotWLAON9BXRdcJe1X5l2oR5JlU8Sk1Z64vspO\n58NL2HaGM4EafZF1AnEpxLMzNQtEQs5p6agGhKLU8vGyVpKgUnd2wIcYt1kZTUgu\nL0d+xThItwwTid0Mdk4UEGJnXRnxxiu7CrKUfjB3AimtZ8hM8tG6jrJEzwvCJ+8g\nZp4u/s4rAgMBAAECggEADlFyPEOxXmXRmCQyMrdZar6kf71LGsYv59gCK4fqyLV3\nW3Re5xckc7898AEqvBGP21KjqM7GIbqbYSFUGUMBIhlaUcV8HexkD3oV4Ghs4kF3\njVcixQASO6uTc2SMMQ4L/6hMPCsxkwsiXFhMEvdX/pj1Lbreal1pW6xOTIYHQ1Rk\nCvZNUSrVgCR6BXMe8lHWxOOSbjxLv9ORoHURqZPkJQc4aVKkK2E8nG/GFMAcWTPP\nhVfvaDJkJuHc9W931mmT8d1+bW1Qg0d3EMOI18katn4m9YnzZqEQFZ9OGyE5hKqf\n3OxB5cTVzbonJZXuBED0YvOiWe3WJgOWbQ5Zna2R7QKBgQDj7Sn18+G00mjq3cBn\nRkRuIstTf3MJ8I/gUnS33ymmtxZ4Oq9wUiX99RKje1Pzq0TGxvH0adyVlTJWbdIc\nuOOl/V2HPkilRAS7b7Nhx8q4pymhxXEdFrXD1ZSL7RPSiaOHRoq/p17fjJipsupk\n6/J82xbLL1Gn2A4mDlIZw/67xwKBgQDOrTB7VsL2jo8K3UnCzeetX1s4TZWvwkTH\nZXXGSle6GeUDbN4LJabpPqqOMs/X2gt49SYZkERVxpdssPSLsoALW9i0wavTQRdV\n41OUn8NgwKigaYLNb1c7kd+GiS3pdgipcpx43HgRW6rxeJDWAPFwnRoC96k2PTJW\nNBpBsw3yfQKBgBl8S1TVEEfHvzOD2B+0G7K08UdE2PgjjfLnRWXJ7j5V+o03Aqbs\niJL89DiTca+tVuNjG2rY63FOXXKMlRHhGpNU4UBeFoFkOaM7ujMUw/YhuuX7zcoS\n4AAlwZZjy/OesEpP+PO1I0ab0fYnq03dlB+h38qYX+kEn5BhyYxX/gPBAoGAcvEe\n5Xl7NGRUaVZoj060ald+A/IiLX19gueKeJ0f7QA5vY3ub4ShL1cKw8q+jO1XNA4j\nAlSZrJql3G0NlCPR0n9iJiUPyo2IzNuAwEeaAVUkcxI7DMW/XgHiro/cWNqsNpDn\nNNBodj7k8yZ6ZopfvKGitcPG98NRG2Aeuis6toECgYBVFQVF31Fms2oZpevnrvxh\n8TpOuHmN9na++PwfHSUzC/cvIgNUiRavY5n8Icnkkq/nScEjdMNQolOe435zQdTW\nWIj9S6o6N0kVA7JVmP000t7mTwuq/V8jhEYdDLByUQJEAiWWytXmd01g10XuCA6Y\n/aIee83b9Xt8MZ/23RGfvQ==\n-----END PRIVATE KEY-----\n",
+  "client_email": "goutalkclient@restaurant-booking-nqnwgf.iam.gserviceaccount.com",
+  "client_id": "111567768897971960727",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/goutalkclient%40restaurant-booking-nqnwgf.iam.gserviceaccount.com"
+}

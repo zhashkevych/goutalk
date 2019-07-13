@@ -33,6 +33,6 @@ services:
     container_name: "chatbot"
     build:
       context: .
-    command: ./bot
+    command: ./bot -dbURI=mongodb://mongodb:27017
     depends_on:
       - server

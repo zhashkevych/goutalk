@@ -3,10 +3,14 @@ package bot
 import (
 	"context"
 	"github.com/gorilla/websocket"
+	"github.com/zhashkevych/goutalk/booking"
+	repo "github.com/zhashkevych/goutalk/booking/mongo"
 	"github.com/zhashkevych/goutalk/nlu"
 	"github.com/zhashkevych/goutalk/nlu/dialogflow"
 	"github.com/zhashkevych/goutalk/queue"
 	"github.com/zhashkevych/scheduler"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
 	"net/url"
 	"os"
@@ -17,6 +21,7 @@ import (
 const (
 	wsURLScheme = "ws"
 	lang        = "en-US"
+	DBName      = "goutalk"
 )
 
 type ChatBot struct {
@@ -31,14 +36,37 @@ type ChatBot struct {
 
 	processor nlu.Processor
 
+	bookingRepo booking.Repository
+
 	taskQueue *queue.Queue
 	response  chan *queue.Result
 
 	scheduler *scheduler.Scheduler
 }
 
-func NewChatBot(wsHost, serverHost, username, password, projectID, credsPath string) (*ChatBot, error) {
-	processor, err := dialogflow.NewDialogflowProcessor(projectID, lang, credsPath)
+func NewChatBot(wsHost, serverHost, username, password, projectID, credsPath, dbURI string) (*ChatBot, error) {
+	client, err := mongo.NewClient(options.Client().ApplyURI(dbURI))
+	if err != nil {
+		log.Fatalf("Error occured while establishing connection to mongoDB")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	err = client.Connect(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = client.Ping(context.Background(), nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	mongoDB := client.Database(DBName)
+	bookingRepo := repo.NewBookingRepository(mongoDB)
+
+	processor, err := dialogflow.NewDialogflowProcessor(projectID, lang, credsPath, bookingRepo)
 	if err != nil {
 		return nil, err
 	}

@@ -1,19 +1,29 @@
 package main
 
 import (
+	"flag"
 	"github.com/kylelemons/go-gypsy/yaml"
 	log "github.com/sirupsen/logrus"
 	"github.com/zhashkevych/goutalk/bot"
 	"os"
 )
 
+var (
+	dbURI string
+)
+
 func main() {
+	flag.StringVar(&dbURI,
+		"dbURI",
+		"mongodb://localhost:27017",
+		"mongodb host")
+
 	config, err := yaml.ReadFile("config.yaml")
 	if err != nil {
 		log.Printf("Error occured while reading config file: %s", err.Error())
 		return
 	}
-	
+
 	setupLogging()
 	chatBot, err := setupChatBot(config)
 	if err != nil {
@@ -70,7 +80,7 @@ func setupChatBot(cfg *yaml.File) (*bot.ChatBot, error) {
 		return nil, err
 	}
 
-	chatBot, err := bot.NewChatBot(wsHost, serverHost, username, password, projectID, jsonPath)
+	chatBot, err := bot.NewChatBot(wsHost, serverHost, username, password, projectID, jsonPath, dbURI)
 	if err != nil {
 		return nil, err
 	}

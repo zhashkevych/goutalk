@@ -30,7 +30,7 @@ func (c *ChatBot) listen(done chan struct{}) {
 
 		log.Printf("Recieved message from chat room with ID %s, message: %s", msg.RoomID, msg.Text)
 
-		c.taskQueue.Push(msg.Text, msg.RoomID)
+		c.taskQueue.Push(msg.Text, msg.RoomID, msg.UserID)
 	}
 }
 

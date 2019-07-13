@@ -10,6 +10,7 @@ const mention = "@bot"
 type Message struct {
 	Text   string `json:"message"`
 	RoomID string `json:"room_id"`
+	UserID string `json:"user_id"`
 }
 
 func Parse(msg []byte) (*Message, error) {

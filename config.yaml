@@ -1,10 +1,10 @@
-wsHost: server:1030
+wsHost: localhost:1030
 
-serverHost: server:8000
+serverHost: localhost:8000
 
-projectID: <dialogflow-project-id>
+projectID: restaurant-booking-nqnwgf
 
-jsonPath: creds.json
+jsonPath: creds-booking.json
 
 username: goutalk-chatbot
 password: superDuPeRseCurEpa$$w0rd
