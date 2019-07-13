@@ -3,6 +3,7 @@ package bot
 import (
 	"context"
 	"github.com/gorilla/websocket"
+	"github.com/zhashkevych/goutalk/alert"
 	"github.com/zhashkevych/goutalk/booking"
 	repo "github.com/zhashkevych/goutalk/booking/mongo"
 	"github.com/zhashkevych/goutalk/nlu"
@@ -42,6 +43,7 @@ type ChatBot struct {
 	response  chan *queue.Result
 
 	scheduler *scheduler.Scheduler
+	alerter   *alert.Alerter
 }
 
 func NewChatBot(wsHost, serverHost, username, password, projectID, credsPath, dbURI string) (*ChatBot, error) {
@@ -66,12 +68,9 @@ func NewChatBot(wsHost, serverHost, username, password, projectID, credsPath, db
 	mongoDB := client.Database(DBName)
 	bookingRepo := repo.NewBookingRepository(mongoDB)
 
-	processor, err := dialogflow.NewDialogflowProcessor(projectID, lang, credsPath, bookingRepo)
-	if err != nil {
-		return nil, err
-	}
+	s := scheduler.NewScheduler()
 
-	return &ChatBot{
+	chatBot := &ChatBot{
 		wsURL: url.URL{
 			Scheme: wsURLScheme,
 			Host:   wsHost,
@@ -82,10 +81,20 @@ func NewChatBot(wsHost, serverHost, username, password, projectID, credsPath, db
 		username: username,
 		password: password,
 
-		taskQueue: queue.NewQueue(processor, 10),
 		response:  make(chan *queue.Result),
-		scheduler: scheduler.NewScheduler(),
-	}, nil
+		scheduler: s,
+	}
+
+	chatBot.alerter = alert.NewAlerter(chatBot.sendMessage, s)
+
+	processor, err := dialogflow.NewDialogflowProcessor(projectID, lang, credsPath, bookingRepo, chatBot.alerter)
+	if err != nil {
+		return nil, err
+	}
+
+	chatBot.taskQueue = queue.NewQueue(processor, 10)
+
+	return chatBot, nil
 }
 
 func (c *ChatBot) Run() error {

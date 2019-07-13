@@ -79,8 +79,38 @@ func (r *BookingRepository) GetByUserID(ctx context.Context, userID string) ([]*
 	return out, nil
 }
 
+func (r *BookingRepository) GetByID(ctx context.Context, id string) (*booking.BookItem, error) {
+	pID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	var item booking.BookItem
+	record := r.db.FindOne(ctx, bson.M{"_id": pID})
+
+	if err := record.Decode(&item); err != nil {
+		return nil, err
+	}
+
+	return &item, nil
+}
+
 func (r *BookingRepository) RemoveByUserID(ctx context.Context, userID string) error {
 	_, err := r.db.DeleteMany(ctx, bson.M{"user_id": userID})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *BookingRepository) RemoveByID(ctx context.Context, userID, id string) error {
+	pID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+
+	_, err = r.db.DeleteOne(ctx, bson.M{"user_id": userID, "_id": pID})
 	if err != nil {
 		return err
 	}

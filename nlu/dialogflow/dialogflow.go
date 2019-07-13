@@ -2,23 +2,25 @@ package dialogflow
 
 import (
 	dialogflow "cloud.google.com/go/dialogflow/apiv2"
+	"context"
 	"errors"
+	"fmt"
+	"github.com/sirupsen/logrus"
+	"github.com/zhashkevych/goutalk/alert"
 	"github.com/zhashkevych/goutalk/booking"
 	"google.golang.org/api/option"
 	dialogflowpb "google.golang.org/genproto/googleapis/cloud/dialogflow/v2"
-	"context"
-	"fmt"
 	"strconv"
 )
 
 const (
-	IntentTypeBook   = "restaurant.book"
-	IntentTypeList   = "restaurant.bookings.list"
-	IntentTypeCancel = "restaurant.bookings.cancel"
-	IntentTypeChange = "restaurant.bookings.changedate"
+	IntentTypeBook     = "restaurant.book"
+	IntentTypeList     = "restaurant.bookings.list"
+	IntentTypeCancel   = "restaurant.bookings.cancel"
+	IntentTypeChange   = "restaurant.bookings.changedate"
+	IntentTypeInterval = "restaurant.bookings.setinterval"
 
-	ResponseCancelationSuccess = "All bookings canceled successfully"
-	ResponseChangeSuccess      = "Booking's time changed successfully"
+	ResponseCancelationOneSuccess = "Booking canceled successfully"
 )
 
 type Response struct {
@@ -32,9 +34,10 @@ type DialogflowProcessor struct {
 	lang          string
 	sessionClient *dialogflow.SessionsClient
 	repo          booking.Repository
+	alerter       *alert.Alerter
 }
 
-func NewDialogflowProcessor(projectID, lang, jsonPath string, bookingRepo booking.Repository) (*DialogflowProcessor, error) {
+func NewDialogflowProcessor(projectID, lang, jsonPath string, bookingRepo booking.Repository, a *alert.Alerter) (*DialogflowProcessor, error) {
 	sessionClient, err := dialogflow.NewSessionsClient(context.Background(), option.WithCredentialsFile(jsonPath))
 	if err != nil {
 		return nil, err
@@ -49,11 +52,12 @@ func NewDialogflowProcessor(projectID, lang, jsonPath string, bookingRepo bookin
 		projectID:     projectID,
 		lang:          lang,
 		repo:          bookingRepo,
+		alerter:       a,
 	}, nil
 }
 
-func (dp *DialogflowProcessor) Process(ctx context.Context, message, chatID, userID string) (string, error) {
-	session := fmt.Sprintf("projects/%s/agent/sessions/%s", dp.projectID, chatID)
+func (dp *DialogflowProcessor) Process(ctx context.Context, message, roomID, userID string) (string, error) {
+	session := fmt.Sprintf("projects/%s/agent/sessions/%s", dp.projectID, roomID)
 
 	textInput := dialogflowpb.TextInput{Text: message, LanguageCode: dp.lang}
 	queryTextInput := dialogflowpb.QueryInput_Text{Text: &textInput}
@@ -67,13 +71,10 @@ func (dp *DialogflowProcessor) Process(ctx context.Context, message, chatID, use
 
 	queryResult := response.GetQueryResult()
 
-	return dp.processQuery(ctx, queryResult, userID)
-	//fulfillmentText := queryResult.GetFulfillmentText()
-
-	//return fulfillmentText, nil
+	return dp.processQuery(ctx, queryResult, roomID, userID)
 }
 
-func (dp *DialogflowProcessor) processQuery(ctx context.Context, q *dialogflowpb.QueryResult, userID string) (string, error) {
+func (dp *DialogflowProcessor) processQuery(ctx context.Context, q *dialogflowpb.QueryResult, roomID, userID string) (string, error) {
 	fulfillmentText := q.GetFulfillmentText()
 
 	switch q.Intent.DisplayName {
@@ -87,7 +88,13 @@ func (dp *DialogflowProcessor) processQuery(ctx context.Context, q *dialogflowpb
 			VenueFacility: q.Parameters.Fields["venue-facility"].GetStringValue(),
 		}
 
-		return fulfillmentText, dp.repo.Insert(ctx, item)
+		if err := dp.repo.Insert(ctx, item); err != nil {
+			return "Can't make booking on this time, it's already booked.", nil
+		}
+
+		//dp.alerter.AddTask(roomID, userID, item.ID.Hex(), timeDiff, time.After(timeDiff))
+
+		return fulfillmentText, nil
 	case IntentTypeList:
 		items, err := dp.repo.GetByUserID(ctx, userID)
 		if err != nil {
@@ -96,25 +103,38 @@ func (dp *DialogflowProcessor) processQuery(ctx context.Context, q *dialogflowpb
 
 		return generateResponseListItems(items), nil
 	case IntentTypeCancel:
-		err := dp.repo.RemoveByUserID(ctx, userID)
+		var err error
+		id := q.Parameters.Fields["ID"].GetStringValue()
+		if id != "" {
+			err = dp.repo.RemoveByID(ctx, userID, id)
+			if err != nil {
+				return "", err
+			}
+
+			return ResponseCancelationOneSuccess, nil
+		}
+
+		err = dp.repo.RemoveByUserID(ctx, userID)
 		if err != nil {
 			return "", err
 		}
 
-		return ResponseCancelationSuccess, nil
+		return fulfillmentText, nil
 	case IntentTypeChange:
 		id := q.Parameters.Fields["ID"].GetStringValue()
 		date := q.Parameters.Fields["date-time"].GetStringValue()
+
+		logrus.Printf("change id: %s", id)
 
 		err := dp.repo.Update(ctx, id, date)
 		if err != nil {
 			return "", err
 		}
 
-		return ResponseChangeSuccess, nil
+		return fulfillmentText, nil
+	default:
+		return fulfillmentText, nil
 	}
-
-	return fulfillmentText, nil
 }
 
 func generateResponseListItems(items []*booking.BookItem) string {

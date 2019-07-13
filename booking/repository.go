@@ -20,6 +20,8 @@ type Repository interface {
 	Delete(ctx context.Context) error
 	Update(ctx context.Context, id, date string) error
 	GetByUserID(ctx context.Context, userID string) ([]*BookItem, error)
+	GetByID(ctx context.Context, id string) (*BookItem, error)
 	RemoveByUserID(ctx context.Context, userID string) error
+	RemoveByID(ctx context.Context, userID, id string) error
 	GetAll(ctx context.Context) ([]*BookItem, error)
 }
